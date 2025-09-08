@@ -8,17 +8,69 @@ from __future__ import annotations
 import os
 import sys
 import urllib.parse
-from typing import Dict, List
+from typing import Dict, List, Iterator
 
 from one_tap import config, db, jsonrpc, random_state, selection
 from one_tap.logging import get_logger
 
 try:  # pragma: no cover - depends on Kodi
+    import xbmc  # type: ignore
     import xbmcvfs  # type: ignore
 except ImportError:  # pragma: no cover - desktop/dev
+    xbmc = None  # type: ignore
     xbmcvfs = None  # type: ignore
 
 logger = get_logger("plugin.one_tap.play")
+
+
+class EpisodePlayer(xbmc.Player if xbmc else object):
+    """Player that automatically queues the next episode."""
+
+    def __init__(self, show_id: str, candidates: List[str]):
+        if not xbmc:  # pragma: no cover - desktop/dev
+            raise RuntimeError("xbmc module not available")
+        super().__init__()
+        self.show_id = show_id
+        self._candidates: Iterator[str] = iter(candidates)
+        self.failures = 0
+        self.active = True
+
+    def _return_home(self) -> None:
+        if xbmc:
+            xbmc.executebuiltin("ActivateWindow(home)")
+        self.active = False
+
+    def play_next(self) -> None:
+        while True:
+            try:
+                episode = next(self._candidates)
+            except StopIteration:
+                self._return_home()
+                return
+            logger.info("Attempting to play %s", episode)
+            try:
+                result = jsonrpc.play_file(episode)
+            except Exception as exc:  # pragma: no cover - runtime
+                logger.error("JSON-RPC failed for %s: %s", episode, exc)
+                self.failures += 1
+                if self.failures >= 3:
+                    self._return_home()
+                    return
+                continue
+            if result.get("error"):
+                logger.error("Kodi reported error for %s: %s", episode, result["error"])
+                self.failures += 1
+                if self.failures >= 3:
+                    self._return_home()
+                    return
+                continue
+            db.update_history(self.show_id, episode)
+            logger.info("Playing %s", episode)
+            self.failures = 0
+            return
+
+    def onPlayBackEnded(self) -> None:  # pragma: no cover - depends on Kodi
+        self.play_next()
 
 
 def _list_episodes(path: str) -> List[str]:
@@ -59,34 +111,21 @@ def main() -> None:
         logger.error("No episodes found for %s", tile["path"])
         return
 
-    candidates = random_state.get(show_id)
-    used_preselected = bool(candidates)
-    if not candidates:
-        candidates = selection.episode_candidates(
-            show_id, episodes, cfg.get("mode", "order"), cfg.get("random", {})
-        )
 
-    attempts = 0
-    for episode in candidates:
-        if attempts >= 3:
-            break
-        attempts += 1
-        logger.info("Attempting to play %s", episode)
-        try:
-            result = jsonrpc.play_file(episode)
-        except Exception as exc:  # pragma: no cover - runtime
-            logger.error("JSON-RPC failed for %s: %s", episode, exc)
-            continue
-        if result.get("error"):
-            logger.error("Kodi reported error for %s: %s", episode, result["error"])
-            continue
-        db.update_history(show_id, episode)
-        if used_preselected:
-            random_state.consume_first(show_id)
-        logger.info("Playing %s", episode)
+    candidates = selection.episode_candidates(
+        show_id, episodes, cfg.get("mode", "order"), cfg.get("random", {})
+    )
+    if not xbmc:
+        logger.error("xbmc module not available")
+
         return
 
-    logger.error("Failed to start playback after %d attempts", attempts)
+    player = EpisodePlayer(show_id, candidates)
+    player.play_next()
+
+    monitor = xbmc.Monitor()
+    while player.active and not monitor.abortRequested():  # pragma: no cover - runtime
+        monitor.waitForAbort(1)
 
 
 if __name__ == "__main__":
