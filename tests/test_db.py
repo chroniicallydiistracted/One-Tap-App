@@ -42,7 +42,6 @@ def test_migrate_history(tmp_path, monkeypatch):
     migrate_history.main()
     assert db.get_history("show") == ["a", "b", "c"]
 
-
 def test_migrate_removes_legacy_file(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "_resolve", lambda p: _fake_resolve(tmp_path, p))
     monkeypatch.setattr(db, "DB_PATH", "history.db")
@@ -90,4 +89,3 @@ def test_remove_last_history(tmp_path, monkeypatch):
 
     db.remove_last_history("show")
     assert db.get_history("show") == ["a"]
-

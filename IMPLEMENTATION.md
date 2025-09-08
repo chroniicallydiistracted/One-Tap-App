@@ -23,7 +23,7 @@ MVP as described in the repository `README`.
   migration; a purge utility is available for maintenance.
 - Randomizer service now monitors player events to auto-advance and skips
   errored episodes, reverting history when playback fails.
-
+  
 ## Design Choices
 
 - **SQLite storage:** Playback history uses a lightweight SQLite database for
@@ -38,3 +38,4 @@ MVP as described in the repository `README`.
 - Flesh out caregiver UI and PIN handling.
 - Extend randomiser service to support comfort weighting and exclude‑last logic
   without relying solely on the playback controller.
+

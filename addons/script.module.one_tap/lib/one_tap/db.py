@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 def _path() -> Path:
     return config._resolve(DB_PATH)
 
-
 def _connect() -> sqlite3.Connection:
     path = _path()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -87,8 +86,7 @@ def remove_last_history(show_id: str) -> None:
             )
     except sqlite3.DatabaseError as exc:  # pragma: no cover - defensive
         logger.error("Failed to remove last history for %s: %s", show_id, exc)
-
-
+        
 def purge_history(show_id: Optional[str] = None) -> None:
     """Remove history for ``show_id`` or all shows when ``show_id`` is ``None``."""
 
