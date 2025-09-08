@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 def _path() -> Path:
     return config._resolve(DB_PATH)
 
-
 def _connect() -> sqlite3.Connection:
     path = _path()
     path.parent.mkdir(parents=True, exist_ok=True)
