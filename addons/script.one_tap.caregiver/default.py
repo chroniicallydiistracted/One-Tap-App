@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Callable, Dict, List
 
-from one_tap import config
+from one_tap import config, db
 from one_tap.logging import get_logger
 
 logger = get_logger("script.one_tap.caregiver")
@@ -30,6 +30,29 @@ def _prompt(message: str) -> str:
         dialog = xbmcgui.Dialog()
         return dialog.input(message) or ""
     return input(f"{message}: ")
+
+
+def _select(title: str, options: List[str], get_input: Callable[[str], str]) -> int:
+    """Return index of selected option or ``-1`` if cancelled."""
+
+    if xbmcgui:  # pragma: no cover - requires Kodi
+        dialog = xbmcgui.Dialog()
+        return dialog.select(title, options)
+
+    while True:  # pragma: no cover - CLI fallback for tests/dev
+        for i, opt in enumerate(options, 1):
+            print(f"{i}. {opt}")
+        resp = get_input(
+            f"{title} (1-{len(options)} or Enter to cancel): "
+        ).strip()
+        if not resp:
+            return -1
+        try:
+            choice = int(resp) - 1
+        except ValueError:
+            continue
+        if 0 <= choice < len(options):
+            return choice
 
 
 def verify_pin(get_pin: Callable[[str], str] = _prompt_pin) -> bool:
@@ -180,20 +203,31 @@ def configure(get_input: Callable[[str], str] = _prompt) -> None:
     logger.info("Configuration updated")
 
 
+def menu(get_input: Callable[[str], str] = _prompt) -> None:
+    """Display a simple graphical caregiver menu."""
+
+    while True:
+        choice = _select(
+            "Caregiver Menu",
+            ["Configure settings", "Purge playback history", "Exit"],
+            get_input,
+        )
+        if choice == 0:
+            configure(get_input)
+        elif choice == 1:
+            show_id = get_input("Show ID to purge (blank for all): ").strip()
+            db.purge_history(show_id or None)
+            logger.info("Playback history purged")
+        else:
+            break
+
+
 def main() -> None:
     """Launch the caregiver menu after validating the PIN."""
 
     if not verify_pin():
         return
-    configure()
-
-    if not verify_pin():
-        return
-    configure()
-
-    if not verify_pin():
-        return
-    logger.info("Caregiver menu not yet implemented")
+    menu()
 
 if __name__ == "__main__":
     main()

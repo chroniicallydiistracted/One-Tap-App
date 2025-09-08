@@ -28,6 +28,8 @@ MVP as described in the repository `README`.
   repeating the same show consecutively.
 - Caregiver menu now lets tiles be reordered or edited and exposes additional
   playback settings like excluding recent episodes from random mode.
+- Added a minimal graphical caregiver menu allowing configuration and playback
+  history purging via Kodi dialogs or a CLI fallback.
   
 ## Design Choices
 
@@ -40,5 +42,6 @@ MVP as described in the repository `README`.
 
 ## Next Steps
 
-- Build a full graphical caregiver menu experience.
+- Polish the caregiver menu interface and expand available maintenance
+  actions.
 
