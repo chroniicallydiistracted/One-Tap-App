@@ -6,7 +6,6 @@ from typing import Iterable, List
 
 from . import db
 
-
 def episode_candidates(
     show_id: str,
     episodes: Iterable[str],
@@ -21,8 +20,7 @@ def episode_candidates(
     supports ``exclude_last_n``.
 
     History is **not** updated here; the caller is responsible for recording
-    the successfully played episode.
-    """
+    the successfully played episode."""
 
     eps: List[str] = list(episodes)
     if not eps:
@@ -49,4 +47,3 @@ def episode_candidates(
     if idx >= len(eps):
         idx = 0
     return eps[idx:] + eps[:idx]
-

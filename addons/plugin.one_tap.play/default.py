@@ -83,6 +83,5 @@ def main() -> None:
 
     logger.error("Failed to start playback after %d attempts", attempts)
 
-
 if __name__ == "__main__":
     main()
