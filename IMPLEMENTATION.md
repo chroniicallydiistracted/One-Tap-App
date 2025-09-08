@@ -23,7 +23,10 @@ MVP as described in the repository `README`.
   migration; a purge utility is available for maintenance.
 - Randomizer service now monitors player events to auto-advance and skips
   errored episodes, reverting history when playback fails.
-  
+- Caregiver script verifies PINs before launching the menu.
+- Randomizer service chooses the next show using comfort weights and avoids
+  repeating the same show consecutively.
+
 ## Design Choices
 
 - **SQLite storage:** Playback history uses a lightweight SQLite database for
@@ -35,7 +38,6 @@ MVP as described in the repository `README`.
 
 ## Next Steps
 
-- Flesh out caregiver UI and PIN handling.
-- Extend randomiser service to support comfort weighting and exclude‑last logic
-  without relying solely on the playback controller.
+- Build out the caregiver menu for configuration management.
+- Expose comfort-weight configuration through the caregiver UI.
 

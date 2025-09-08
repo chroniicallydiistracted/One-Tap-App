@@ -1,6 +1,8 @@
 """Background service providing auto-advance and playback error handling."""
 from __future__ import annotations
 
+import random
+
 import urllib.parse
 
 from one_tap import config, db
@@ -29,8 +31,25 @@ if xbmc:  # pragma: no cover - depends on Kodi
                     return tile.get("show_id")
             return None
 
+        def _next_show(self) -> str | None:
+            cfg = config.load_config()
+            tiles = [t for t in cfg.get("tiles", []) if t.get("show_id")]
+            if not tiles:
+                return None
+            current = self._current_show()
+            if current and len(tiles) > 1:
+                tiles = [t for t in tiles if t.get("show_id") != current]
+            if not tiles:
+                return None
+            rand_cfg = cfg.get("random", {})
+            if rand_cfg.get("use_comfort_weights"):
+                show_ids = [t["show_id"] for t in tiles]
+                weights = [float(t.get("weight", 1)) for t in tiles]
+                return random.choices(show_ids, weights=weights, k=1)[0]
+            return random.choice([t["show_id"] for t in tiles])
+
         def _play_next(self) -> None:
-            show_id = self._current_show()
+            show_id = self._next_show()
             if not show_id:
                 return
             xbmc.executebuiltin(
