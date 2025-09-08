@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 
@@ -165,12 +166,53 @@ def test_menu_runs_selected_actions(monkeypatch):
     monkeypatch.setattr(
         caregiver.db, "purge_history", lambda _show=None: called.append("purge")
     )
+    monkeypatch.setattr(
+        caregiver, "export_config", lambda path: called.append(f"export:{path}")
+    )
+    monkeypatch.setattr(
+        caregiver, "import_config", lambda path: called.append(f"import:{path}")
+    )
 
-    inputs = iter(["1", "2", "", "3"])
+    inputs = iter([
+        "1",
+        "2",
+        "",
+        "3",
+        "out.json",
+        "4",
+        "out.json",
+        "5",
+    ])
 
     def fake_input(_prompt: str) -> str:
         return next(inputs)
 
     caregiver.menu(fake_input)
 
-    assert called == ["config", "purge"]
+    assert called == ["config", "purge", "export:out.json", "import:out.json"]
+
+
+def test_export_config_writes_file(tmp_path, monkeypatch):
+    import default as caregiver
+
+    cfg = {"mode": "order", "tiles": []}
+    monkeypatch.setattr(caregiver.config, "load_config", lambda: cfg)
+
+    dest = tmp_path / "cfg.json"
+    caregiver.export_config(str(dest))
+
+    assert json.loads(dest.read_text()) == cfg
+
+
+def test_import_config_reads_file(tmp_path, monkeypatch):
+    import default as caregiver
+
+    src = tmp_path / "cfg.json"
+    data = {"mode": "random"}
+    src.write_text(json.dumps(data))
+
+    saved: dict = {}
+    monkeypatch.setattr(caregiver.config, "save_config", lambda c: saved.update(c))
+
+    assert caregiver.import_config(str(src)) is True
+    assert saved == data
