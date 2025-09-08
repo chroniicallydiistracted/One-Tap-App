@@ -1,0 +1,12 @@
+<addon id="script.one_tap.caregiver" name="One-Tap Caregiver" version="0.1.0" provider-name="One-Tap">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+        <import addon="script.module.one_tap" version="0.1.0"/>
+    </requires>
+    <extension point="xbmc.python.script" library="default.py"/>
+    <extension point="xbmc.addon.metadata">
+        <summary>Caregiver menu</summary>
+        <description>Manage tiles, playback mode and PIN protection.</description>
+        <platform>all</platform>
+    </extension>
+</addon>
