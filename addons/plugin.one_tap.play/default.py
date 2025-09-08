@@ -2,15 +2,16 @@
 
 The script expects ``show_id`` to be provided as a query parameter.  The
 configured tile for the show is looked up and the next episode is selected
-according to the global configuration."""
+according to the global configuration.
+"""
 from __future__ import annotations
 
 import os
 import sys
 import urllib.parse
-from typing import Dict, List, Iterator
+from typing import Dict, List
 
-from one_tap import config, db, jsonrpc, random_state, selection
+from one_tap import config, db, selection
 from one_tap.logging import get_logger
 
 try:  # pragma: no cover - depends on Kodi
@@ -21,56 +22,6 @@ except ImportError:  # pragma: no cover - desktop/dev
     xbmcvfs = None  # type: ignore
 
 logger = get_logger("plugin.one_tap.play")
-
-
-class EpisodePlayer(xbmc.Player if xbmc else object):
-    """Player that automatically queues the next episode."""
-
-    def __init__(self, show_id: str, candidates: List[str]):
-        if not xbmc:  # pragma: no cover - desktop/dev
-            raise RuntimeError("xbmc module not available")
-        super().__init__()
-        self.show_id = show_id
-        self._candidates: Iterator[str] = iter(candidates)
-        self.failures = 0
-        self.active = True
-
-    def _return_home(self) -> None:
-        if xbmc:
-            xbmc.executebuiltin("ActivateWindow(home)")
-        self.active = False
-
-    def play_next(self) -> None:
-        while True:
-            try:
-                episode = next(self._candidates)
-            except StopIteration:
-                self._return_home()
-                return
-            logger.info("Attempting to play %s", episode)
-            try:
-                result = jsonrpc.play_file(episode)
-            except Exception as exc:  # pragma: no cover - runtime
-                logger.error("JSON-RPC failed for %s: %s", episode, exc)
-                self.failures += 1
-                if self.failures >= 3:
-                    self._return_home()
-                    return
-                continue
-            if result.get("error"):
-                logger.error("Kodi reported error for %s: %s", episode, result["error"])
-                self.failures += 1
-                if self.failures >= 3:
-                    self._return_home()
-                    return
-                continue
-            db.update_history(self.show_id, episode)
-            logger.info("Playing %s", episode)
-            self.failures = 0
-            return
-
-    def onPlayBackEnded(self) -> None:  # pragma: no cover - depends on Kodi
-        self.play_next()
 
 
 def _list_episodes(path: str) -> List[str]:
@@ -93,6 +44,65 @@ def _get_params() -> Dict[str, str]:
     return {k: v[0] for k, v in urllib.parse.parse_qs(qs).items()}
 
 
+class AutoAdvancePlayer(xbmc.Player if xbmc else object):
+    """Player that auto-advances episodes and tracks failures."""
+
+    def __init__(self, show_id: str, episodes: List[str], cfg: dict) -> None:
+        if xbmc:
+            super().__init__()
+        self.show_id = show_id
+        self.episodes = episodes
+        self.cfg = cfg
+        self.failure_count = 0
+        self.active = True
+        self.play_next()
+
+    def play_next(self) -> None:
+        if not xbmc:
+            logger.info("Kodi not available; cannot play episodes")
+            self.active = False
+            return
+
+        candidates = selection.episode_candidates(
+            self.show_id, self.episodes, self.cfg.get("mode", "order"), self.cfg.get("random", {})
+        )
+        for episode in candidates:
+            if self.failure_count >= 3:
+                break
+            try:
+                logger.info("Attempting to play %s", episode)
+                super().play(episode)
+            except Exception as exc:  # pragma: no cover - runtime only
+                logger.error("Playback start failed for %s: %s", episode, exc)
+                self.failure_count += 1
+                continue
+            db.update_history(self.show_id, episode)
+            self.failure_count = 0
+            logger.info("Playing %s", episode)
+            return
+
+        logger.error("Unable to start playback after %d failures", self.failure_count)
+        self.active = False
+        xbmc.executebuiltin("ActivateWindow(Home)")
+
+    # Player callbacks
+    def onPlayBackEnded(self) -> None:  # pragma: no cover - depends on Kodi
+        logger.info("Playback ended; advancing")
+        self.play_next()
+
+    def onPlayBackStopped(self) -> None:  # pragma: no cover - depends on Kodi
+        logger.info("Playback stopped by user")
+        self.active = False
+
+    def onPlayBackError(self) -> None:  # pragma: no cover - depends on Kodi
+        logger.error("Playback error encountered")
+        self.failure_count += 1
+        if self.failure_count >= 3:
+            self.active = False
+            xbmc.executebuiltin("ActivateWindow(Home)")
+        else:
+            self.play_next()
+
 def main() -> None:
     params = _get_params()
     show_id = params.get("show_id")
@@ -111,22 +121,14 @@ def main() -> None:
         logger.error("No episodes found for %s", tile["path"])
         return
 
-
-    candidates = selection.episode_candidates(
-        show_id, episodes, cfg.get("mode", "order"), cfg.get("random", {})
-    )
-    if not xbmc:
-        logger.error("xbmc module not available")
-
-        return
-
-    player = EpisodePlayer(show_id, candidates)
-    player.play_next()
-
-    monitor = xbmc.Monitor()
-    while player.active and not monitor.abortRequested():  # pragma: no cover - runtime
-        monitor.waitForAbort(1)
-
+    player = AutoAdvancePlayer(show_id, episodes, cfg)
+    if xbmc:
+        monitor = xbmc.Monitor()
+        while player.active and not monitor.abortRequested():
+            if monitor.waitForAbort(1):
+                break
+    else:
+        logger.info("Auto-advance requires Kodi; exiting")
 
 if __name__ == "__main__":
     main()

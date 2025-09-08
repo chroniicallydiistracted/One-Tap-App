@@ -19,11 +19,14 @@ MVP as described in the repository `README`.
   updates until playback succeeds, enabling error skips.
 - Playback controller now retries up to three episodes before giving up,
   avoiding getting stuck on corrupt files.
+- Introduced auto-advance via a custom ``xbmc.Player`` subclass which moves to
+  the next candidate episode after playback ends and returns to the home screen
+  after three consecutive failures.
 
 ## Design Choices
 
-- **SQLite storage:** Playback history uses a lightweight SQLite database for
-  durability while remaining simple to manage.
+- **File based storage:** Playback history uses a small JSON file instead of a
+  database for simplicity during early development.
 - **Kodi fallbacks:** Modules gracefully degrade when run outside Kodi by
   avoiding hard dependencies on `xbmc`/`xbmcvfs` modules, easing desktop testing.
 - **Explicit logging:** A tiny wrapper normalises logging both inside Kodi and
@@ -34,4 +37,5 @@ MVP as described in the repository `README`.
 - Flesh out caregiver UI and PIN handling.
 - Extend randomiser service to support comfort weighting and exclude‑last logic
   without relying solely on the playback controller.
-- Implement auto-advance and smarter error handling based on player events.
+- Replace JSON file storage with a more robust database if needed.
+
