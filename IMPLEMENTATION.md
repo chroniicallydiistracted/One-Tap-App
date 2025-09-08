@@ -15,6 +15,10 @@ MVP as described in the repository `README`.
   `packaging/build_addons.py` script.
 - Added minimal stubs for the randomizer background service and caregiver menu
   to allow future feature expansion.
+- Refined episode selection to provide a list of candidates and defer history
+  updates until playback succeeds, enabling error skips.
+- Playback controller now retries up to three episodes before giving up,
+  avoiding getting stuck on corrupt files.
 
 ## Design Choices
 
@@ -30,4 +34,5 @@ MVP as described in the repository `README`.
 - Flesh out caregiver UI and PIN handling.
 - Extend randomiser service to support comfort weighting and exclude‑last logic
   without relying solely on the playback controller.
+- Implement auto-advance and smarter error handling based on player events.
 - Replace JSON file storage with a more robust database if needed.

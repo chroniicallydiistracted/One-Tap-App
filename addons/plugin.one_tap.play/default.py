@@ -11,7 +11,7 @@ import sys
 import urllib.parse
 from typing import Dict, List
 
-from one_tap import config, jsonrpc, selection
+from one_tap import config, db, jsonrpc, selection
 from one_tap.logging import get_logger
 
 try:  # pragma: no cover - depends on Kodi
@@ -60,13 +60,28 @@ def main() -> None:
         logger.error("No episodes found for %s", tile["path"])
         return
 
-    episode = selection.choose_episode(show_id, episodes, cfg.get("mode", "order"), cfg.get("random", {}))
-    logger.info("Playing %s", episode)
-    try:
-        jsonrpc.play_file(episode)
-    except Exception as exc:  # pragma: no cover - runtime
-        logger.error(f"Failed to start playback: {exc}")
+    candidates = selection.episode_candidates(
+        show_id, episodes, cfg.get("mode", "order"), cfg.get("random", {})
+    )
+    attempts = 0
+    for episode in candidates:
+        if attempts >= 3:
+            break
+        attempts += 1
+        logger.info("Attempting to play %s", episode)
+        try:
+            result = jsonrpc.play_file(episode)
+        except Exception as exc:  # pragma: no cover - runtime
+            logger.error("JSON-RPC failed for %s: %s", episode, exc)
+            continue
+        if result.get("error"):
+            logger.error("Kodi reported error for %s: %s", episode, result["error"])
+            continue
+        db.update_history(show_id, episode)
+        logger.info("Playing %s", episode)
+        return
 
+    logger.error("Failed to start playback after %d attempts", attempts)
 
 if __name__ == "__main__":
     main()
