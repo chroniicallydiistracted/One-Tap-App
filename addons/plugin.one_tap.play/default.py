@@ -2,8 +2,7 @@
 
 The script expects ``show_id`` to be provided as a query parameter.  The
 configured tile for the show is looked up and the next episode is selected
-according to the global configuration.
-"""
+according to the global configuration."""
 from __future__ import annotations
 
 import os
@@ -11,7 +10,7 @@ import sys
 import urllib.parse
 from typing import Dict, List
 
-from one_tap import config, db, jsonrpc, selection
+from one_tap import config, db, jsonrpc, random_state, selection
 from one_tap.logging import get_logger
 
 try:  # pragma: no cover - depends on Kodi
@@ -60,9 +59,13 @@ def main() -> None:
         logger.error("No episodes found for %s", tile["path"])
         return
 
-    candidates = selection.episode_candidates(
-        show_id, episodes, cfg.get("mode", "order"), cfg.get("random", {})
-    )
+    candidates = random_state.get(show_id)
+    used_preselected = bool(candidates)
+    if not candidates:
+        candidates = selection.episode_candidates(
+            show_id, episodes, cfg.get("mode", "order"), cfg.get("random", {})
+        )
+
     attempts = 0
     for episode in candidates:
         if attempts >= 3:
@@ -78,10 +81,13 @@ def main() -> None:
             logger.error("Kodi reported error for %s: %s", episode, result["error"])
             continue
         db.update_history(show_id, episode)
+        if used_preselected:
+            random_state.consume_first(show_id)
         logger.info("Playing %s", episode)
         return
 
     logger.error("Failed to start playback after %d attempts", attempts)
+
 
 if __name__ == "__main__":
     main()
