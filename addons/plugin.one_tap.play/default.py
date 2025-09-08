@@ -55,6 +55,7 @@ class AutoAdvancePlayer(xbmc.Player if xbmc else object):
         self.cfg = cfg
         self.failure_count = 0
         self.active = True
+        self.pending: str | None = None
         self.play_next()
 
     def play_next(self) -> None:
@@ -71,14 +72,13 @@ class AutoAdvancePlayer(xbmc.Player if xbmc else object):
                 break
             try:
                 logger.info("Attempting to play %s", episode)
+                self.pending = episode
                 super().play(episode)
             except Exception as exc:  # pragma: no cover - runtime only
                 logger.error("Playback start failed for %s: %s", episode, exc)
                 self.failure_count += 1
+                self.pending = None
                 continue
-            db.update_history(self.show_id, episode)
-            self.failure_count = 0
-            logger.info("Playing %s", episode)
             return
 
         logger.error("Unable to start playback after %d failures", self.failure_count)
@@ -86,6 +86,11 @@ class AutoAdvancePlayer(xbmc.Player if xbmc else object):
         xbmc.executebuiltin("ActivateWindow(Home)")
 
     # Player callbacks
+    def onPlayBackStarted(self) -> None:  # pragma: no cover - depends on Kodi
+        if self.pending:
+            db.update_history(self.show_id, self.pending)
+            self.failure_count = 0
+            logger.info("Playing %s", self.pending)
     def onPlayBackEnded(self) -> None:  # pragma: no cover - depends on Kodi
         logger.info("Playback ended; advancing")
         self.play_next()
@@ -97,6 +102,7 @@ class AutoAdvancePlayer(xbmc.Player if xbmc else object):
     def onPlayBackError(self) -> None:  # pragma: no cover - depends on Kodi
         logger.error("Playback error encountered")
         self.failure_count += 1
+        self.pending = None
         if self.failure_count >= 3:
             self.active = False
             xbmc.executebuiltin("ActivateWindow(Home)")

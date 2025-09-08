@@ -36,7 +36,6 @@ def episode_candidates(
         candidates = [e for e in eps if e not in recent]
         if not candidates:
             candidates = eps
-
         random.shuffle(candidates)
         return candidates
 
