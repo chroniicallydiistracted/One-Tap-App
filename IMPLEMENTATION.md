@@ -19,11 +19,15 @@ MVP as described in the repository `README`.
   updates until playback succeeds, enabling error skips.
 - Playback controller now retries up to three episodes before giving up,
   avoiding getting stuck on corrupt files.
+- Playback history limit is configurable and legacy JSON files are removed on
+  migration; a purge utility is available for maintenance.
+- Randomizer service now monitors player events to auto-advance and skips
+  errored episodes, reverting history when playback fails.
 
 ## Design Choices
 
-- **File based storage:** Playback history uses a small JSON file instead of a
-  database for simplicity during early development.
+- **SQLite storage:** Playback history uses a lightweight SQLite database for
+  durability while remaining simple to manage.
 - **Kodi fallbacks:** Modules gracefully degrade when run outside Kodi by
   avoiding hard dependencies on `xbmc`/`xbmcvfs` modules, easing desktop testing.
 - **Explicit logging:** A tiny wrapper normalises logging both inside Kodi and
@@ -34,5 +38,3 @@ MVP as described in the repository `README`.
 - Flesh out caregiver UI and PIN handling.
 - Extend randomiser service to support comfort weighting and exclude‑last logic
   without relying solely on the playback controller.
-- Implement auto-advance and smarter error handling based on player events.
-- Replace JSON file storage with a more robust database if needed.

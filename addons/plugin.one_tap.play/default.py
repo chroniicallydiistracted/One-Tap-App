@@ -63,6 +63,7 @@ def main() -> None:
     candidates = selection.episode_candidates(
         show_id, episodes, cfg.get("mode", "order"), cfg.get("random", {})
     )
+    history_limit = cfg.get("history", {}).get("max", db.DEFAULT_MAX_HISTORY)
     attempts = 0
     for episode in candidates:
         if attempts >= 3:
@@ -77,7 +78,7 @@ def main() -> None:
         if result.get("error"):
             logger.error("Kodi reported error for %s: %s", episode, result["error"])
             continue
-        db.update_history(show_id, episode)
+        db.update_history(show_id, episode, max_history=history_limit)
         logger.info("Playing %s", episode)
         return
 
