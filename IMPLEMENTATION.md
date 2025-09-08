@@ -38,3 +38,4 @@ MVP as described in the repository `README`.
 - Extend randomiser service to support comfort weighting and exclude‑last logic
   without relying solely on the playback controller.
 - Replace JSON file storage with a more robust database if needed.
+

@@ -103,7 +103,6 @@ class AutoAdvancePlayer(xbmc.Player if xbmc else object):
         else:
             self.play_next()
 
-
 def main() -> None:
     params = _get_params()
     show_id = params.get("show_id")
@@ -130,7 +129,6 @@ def main() -> None:
                 break
     else:
         logger.info("Auto-advance requires Kodi; exiting")
-
 
 if __name__ == "__main__":
     main()

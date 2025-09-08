@@ -36,6 +36,7 @@ def episode_candidates(
         candidates = [e for e in eps if e not in recent]
         if not candidates:
             candidates = eps
+
         random.shuffle(candidates)
         return candidates
 
@@ -49,4 +50,3 @@ def episode_candidates(
     if idx >= len(eps):
         idx = 0
     return eps[idx:] + eps[:idx]
-
