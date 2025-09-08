@@ -26,6 +26,8 @@ MVP as described in the repository `README`.
 - Caregiver script verifies PINs before launching the menu.
 - Randomizer service chooses the next show using comfort weights and avoids
   repeating the same show consecutively.
+- Caregiver menu now lets tiles be reordered or edited and exposes additional
+  playback settings like excluding recent episodes from random mode.
   
 ## Design Choices
 
@@ -38,6 +40,5 @@ MVP as described in the repository `README`.
 
 ## Next Steps
 
-- Allow caregivers to reorder tiles and edit metadata.
-- Expose further playback settings through the caregiver UI.
+- Build a full graphical caregiver menu experience.
 

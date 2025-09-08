@@ -46,16 +46,23 @@ def verify_pin(get_pin: Callable[[str], str] = _prompt_pin) -> bool:
     return True
 
 def _manage_tiles(cfg: Dict, get_input: Callable[[str], str]) -> None:
-    """Allow caregivers to add or remove tiles."""
+    """Allow caregivers to add, remove, edit, or reorder tiles."""
 
     tiles: List[Dict] = cfg.setdefault("tiles", [])
     while True:
-        action = get_input("Tile action [add/remove/done]: ").strip().lower()
+        action = (
+            get_input("Tile action [add/remove/edit/reorder/done]: ")
+            .strip()
+            .lower()
+        )
         if action.startswith("a"):
             show_id = get_input("Show ID: ").strip()
             path = get_input("Path: ").strip()
             if show_id and path:
                 tile: Dict[str, object] = {"show_id": show_id, "path": path}
+                label = get_input("Label (optional): ").strip()
+                if label:
+                    tile["label"] = label
                 weight = get_input("Weight (default 1): ").strip()
                 if weight:
                     try:
@@ -63,9 +70,42 @@ def _manage_tiles(cfg: Dict, get_input: Callable[[str], str]) -> None:
                     except ValueError:
                         logger.error("Invalid weight for %s: %s", show_id, weight)
                 tiles.append(tile)
-        elif action.startswith("r"):
+        elif action.startswith("remove"):
             show_id = get_input("Show ID to remove: ").strip()
             tiles[:] = [t for t in tiles if t.get("show_id") != show_id]
+        elif action.startswith("edit"):
+            show_id = get_input("Show ID to edit: ").strip()
+            tile = next((t for t in tiles if t.get("show_id") == show_id), None)
+            if not tile:
+                continue
+            label = get_input(f"Label ({tile.get('label', '')}): ").strip()
+            if label:
+                tile["label"] = label
+            path = get_input(f"Path ({tile.get('path', '')}): ").strip()
+            if path:
+                tile["path"] = path
+            weight = get_input(f"Weight ({tile.get('weight', 1)}): ").strip()
+            if weight:
+                try:
+                    tile["weight"] = float(weight)
+                except ValueError:
+                    logger.error("Invalid weight for %s: %s", show_id, weight)
+        elif action.startswith("reorder"):
+            show_id = get_input("Show ID to move: ").strip()
+            try:
+                new_pos = int(get_input("New position (0-based): ").strip())
+            except ValueError:
+                logger.error("Invalid position for %s", show_id)
+                continue
+            idx = next((i for i, t in enumerate(tiles) if t.get("show_id") == show_id), None)
+            if idx is None:
+                continue
+            tile = tiles.pop(idx)
+            if new_pos < 0:
+                new_pos = 0
+            if new_pos > len(tiles):
+                new_pos = len(tiles)
+            tiles.insert(new_pos, tile)
         else:
             break
 
@@ -89,6 +129,16 @@ def configure(get_input: Callable[[str], str] = _prompt) -> None:
 
     if cfg.get("mode") == "random":
         rand_cfg = cfg.setdefault("random", {})
+        cur_ex = int(rand_cfg.get("exclude_last_n", 0))
+        resp = get_input(
+            f"Exclude last N episodes (current {cur_ex}): "
+        ).strip()
+        if resp:
+            try:
+                rand_cfg["exclude_last_n"] = int(resp)
+            except ValueError:
+                logger.error("Invalid exclude_last_n: %s", resp)
+
         cur = "y" if rand_cfg.get("use_comfort_weights") else "n"
         use_weights = (
             get_input(f"Use comfort weights? [y/n] (current {cur}): ")
