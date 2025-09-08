@@ -1,4 +1,4 @@
-"""Caregiver helper script with basic PIN verification."""
+"""Caregiver helper script providing basic configuration management."""
 from __future__ import annotations
 
 from typing import Callable
@@ -23,6 +23,14 @@ def _prompt_pin(message: str) -> str:
     return input(f"{message}: ")
 
 
+def _prompt(message: str) -> str:
+    """Return user input via GUI or ``input`` for tests."""
+
+    if xbmcgui:  # pragma: no cover - requires Kodi
+        dialog = xbmcgui.Dialog()
+        return dialog.input(message) or ""
+    return input(f"{message}: ")
+
 def verify_pin(get_pin: Callable[[str], str] = _prompt_pin) -> bool:
     """Return ``True`` if the caregiver PIN is valid or not set."""
 
@@ -36,9 +44,54 @@ def verify_pin(get_pin: Callable[[str], str] = _prompt_pin) -> bool:
         return False
     return True
 
+def configure(get_input: Callable[[str], str] = _prompt) -> None:
+    """Interactively update caregiver configuration settings."""
+
+    cfg = config.load_config()
+    mode = get_input(
+        f"Playback mode [order/random] (current {cfg.get('mode', 'order')}): "
+    ).strip().lower()
+    if mode in {"order", "random"}:
+        cfg["mode"] = mode
+
+    if cfg.get("mode") == "random":
+        rand_cfg = cfg.setdefault("random", {})
+        cur = "y" if rand_cfg.get("use_comfort_weights") else "n"
+        use_weights = (
+            get_input(f"Use comfort weights? [y/n] (current {cur}): ")
+            .strip()
+            .lower()
+            or cur
+        )
+        rand_cfg["use_comfort_weights"] = use_weights.startswith("y")
+        if rand_cfg["use_comfort_weights"]:
+            for tile in cfg.get("tiles", []):
+                show_id = tile.get("show_id")
+                if not show_id:
+                    continue
+                current = float(tile.get("weight", 1))
+                resp = (
+                    get_input(
+                        f"Weight for {show_id} (current {current}): "
+                    )
+                    .strip()
+                )
+                if resp:
+                    try:
+                        tile["weight"] = float(resp)
+                    except ValueError:
+                        logger.error("Invalid weight for %s: %s", show_id, resp)
+
+    config.save_config(cfg)
+    logger.info("Configuration updated")
+
 
 def main() -> None:
     """Launch the caregiver menu after validating the PIN."""
+
+    if not verify_pin():
+        return
+    configure()
 
     if not verify_pin():
         return

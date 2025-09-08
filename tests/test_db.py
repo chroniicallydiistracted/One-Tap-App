@@ -90,4 +90,4 @@ def test_remove_last_history(tmp_path, monkeypatch):
 
     db.remove_last_history("show")
     assert db.get_history("show") == ["a"]
-    
+

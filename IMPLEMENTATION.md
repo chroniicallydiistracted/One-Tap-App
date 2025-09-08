@@ -38,6 +38,5 @@ MVP as described in the repository `README`.
 
 ## Next Steps
 
-- Build out the caregiver menu for configuration management.
-- Expose comfort-weight configuration through the caregiver UI.
-
+- Allow caregivers to manage the tile list directly from the menu.
+- Surface additional playback settings (e.g., history limits) through the caregiver UI.
