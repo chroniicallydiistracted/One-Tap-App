@@ -48,7 +48,14 @@ def load_config() -> Dict[str, Any]:
 
     path = _resolve(CONFIG_PATH)
     if not path.exists():
-        return {"tiles": [], "mode": "order", "random": {}, "ui": {}, "pin": ""}
+        return {
+            "tiles": [],
+            "mode": "order",
+            "random": {},
+            "ui": {},
+            "pin": "",
+            "history": {"max": 50},
+        }
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
 
