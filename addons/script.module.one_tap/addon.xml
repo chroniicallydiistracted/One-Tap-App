@@ -1,0 +1,10 @@
+<addon id="script.module.one_tap" name="One-Tap Module" version="0.1.0" provider-name="One-Tap">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+    </requires>
+    <extension point="xbmc.python.module"/>
+    <extension point="xbmc.addon.metadata">
+        <summary>Shared utilities for One-Tap add-ons</summary>
+        <platform>all</platform>
+    </extension>
+</addon>
