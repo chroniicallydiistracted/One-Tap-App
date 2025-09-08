@@ -1,0 +1,12 @@
+<addon id="plugin.one_tap.play" name="One-Tap Play" version="0.1.0" provider-name="One-Tap">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+        <import addon="script.module.one_tap" version="0.1.0"/>
+    </requires>
+    <extension point="xbmc.python.script" library="default.py"/>
+    <extension point="xbmc.addon.metadata">
+        <summary>One-Tap playback controller</summary>
+        <description>Selects and starts the next episode immediately.</description>
+        <platform>all</platform>
+    </extension>
+</addon>
