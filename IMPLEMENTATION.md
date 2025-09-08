@@ -1,0 +1,40 @@
+# Implementation Notes
+
+This document records the initial implementation work for the One‑Tap TV Launcher
+MVP as described in the repository `README`.
+
+## Summary
+
+- Added fully fledged Python module under `script.module.one_tap` providing
+  configuration loading/saving, JSON‑RPC utilities, logging helpers, playback
+  history storage and episode selection logic.
+- Implemented playback controller `plugin.one_tap.play` which loads the
+  caregiver configuration, chooses the next episode in **Order** or **Random**
+  mode and instructs Kodi to start playback via JSON‑RPC.
+- Filled in `addon.xml` manifests for all add‑ons so they can be packaged by the
+  `packaging/build_addons.py` script.
+- Added minimal stubs for the randomizer background service and caregiver menu
+  to allow future feature expansion.
+- Refined episode selection to provide a list of candidates and defer history
+  updates until playback succeeds, enabling error skips.
+- Playback controller now retries up to three episodes before giving up,
+  avoiding getting stuck on corrupt files.
+- Introduced auto-advance via a custom ``xbmc.Player`` subclass which moves to
+  the next candidate episode after playback ends and returns to the home screen
+  after three consecutive failures.
+
+## Design Choices
+
+- **File based storage:** Playback history uses a small JSON file instead of a
+  database for simplicity during early development.
+- **Kodi fallbacks:** Modules gracefully degrade when run outside Kodi by
+  avoiding hard dependencies on `xbmc`/`xbmcvfs` modules, easing desktop testing.
+- **Explicit logging:** A tiny wrapper normalises logging both inside Kodi and
+  during development, keeping messages consistent across environments.
+
+## Next Steps
+
+- Flesh out caregiver UI and PIN handling.
+- Extend randomiser service to support comfort weighting and exclude‑last logic
+  without relying solely on the playback controller.
+- Replace JSON file storage with a more robust database if needed.
