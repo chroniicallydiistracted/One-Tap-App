@@ -40,3 +40,4 @@ MVP as described in the repository `README`.
 
 - Build out the caregiver menu for configuration management.
 - Expose comfort-weight configuration through the caregiver UI.
+

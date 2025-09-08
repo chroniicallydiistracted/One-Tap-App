@@ -1,0 +1,16 @@
+<addon id="skin.tile_only" name="One-Tap Tile Only" version="0.1.0" provider-name="One-Tap">
+    <requires>
+        <import addon="xbmc.gui" version="5.16.0"/>
+        <import addon="script.module.one_tap" version="0.1.0"/>
+        <import addon="plugin.one_tap.play" version="0.1.0"/>
+    </requires>
+    <extension point="xbmc.gui.skin" defaultresolution="1080i" effectstoggle="true">
+        <res width="1920" height="1080" aspect="16:9" default="true" />
+    </extension>
+    <extension point="xbmc.service" library="service.py" start="startup"/>
+    <extension point="xbmc.addon.metadata">
+        <summary>One-Tap tile-only home screen</summary>
+        <description>Minimal skin that shows configured tiles for one-tap playback.</description>
+        <platform>all</platform>
+    </extension>
+</addon>
