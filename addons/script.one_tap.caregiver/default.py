@@ -1,6 +1,8 @@
 """Caregiver helper script providing basic configuration management."""
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Callable, Dict, List
 
 from one_tap import config, db
@@ -203,13 +205,49 @@ def configure(get_input: Callable[[str], str] = _prompt) -> None:
     logger.info("Configuration updated")
 
 
+def export_config(path: str) -> bool:
+    """Export current configuration to ``path``."""
+
+    dest = Path(path).expanduser()
+    cfg = config.load_config()
+    try:
+        with dest.open("w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=2, sort_keys=True)
+    except OSError as exc:  # pragma: no cover - depends on fs
+        logger.error(f"Failed to export configuration to {dest}: {exc}")
+        return False
+    logger.info(f"Configuration exported to {dest}")
+    return True
+
+
+def import_config(path: str) -> bool:
+    """Import configuration from ``path`` and persist it."""
+
+    src = Path(path).expanduser()
+    try:
+        with src.open("r", encoding="utf-8") as f:
+            cfg = json.load(f)
+    except (OSError, ValueError) as exc:  # pragma: no cover - depends on fs
+        logger.error(f"Failed to import configuration from {src}: {exc}")
+        return False
+    config.save_config(cfg)
+    logger.info(f"Configuration imported from {src}")
+    return True
+
+
 def menu(get_input: Callable[[str], str] = _prompt) -> None:
     """Display a simple graphical caregiver menu."""
 
     while True:
         choice = _select(
             "Caregiver Menu",
-            ["Configure settings", "Purge playback history", "Exit"],
+            [
+                "Configure settings",
+                "Purge playback history",
+                "Export configuration",
+                "Import configuration",
+                "Exit",
+            ],
             get_input,
         )
         if choice == 0:
@@ -218,6 +256,14 @@ def menu(get_input: Callable[[str], str] = _prompt) -> None:
             show_id = get_input("Show ID to purge (blank for all): ").strip()
             db.purge_history(show_id or None)
             logger.info("Playback history purged")
+        elif choice == 2:
+            path = get_input("Export path: ").strip()
+            if path:
+                export_config(path)
+        elif choice == 3:
+            path = get_input("Import path: ").strip()
+            if path:
+                import_config(path)
         else:
             break
 
