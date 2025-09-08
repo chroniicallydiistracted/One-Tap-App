@@ -41,7 +41,7 @@ def test_configure_updates_weights(monkeypatch):
         ],
     }
 
-    inputs = iter(["random", "y", "1.5", "2.0"])
+    inputs = iter(["n", "random", "y", "1.5", "2.0", ""])
 
     def fake_input(_prompt: str) -> str:
         return next(inputs)
@@ -60,3 +60,45 @@ def test_configure_updates_weights(monkeypatch):
     assert saved["mode"] == "random"
     assert saved["random"]["use_comfort_weights"] is True
     assert [t["weight"] for t in saved["tiles"]] == [1.5, 2.0]
+
+
+def test_configure_manages_tiles_and_history(monkeypatch):
+    import default as caregiver
+
+    cfg = {
+        "mode": "order",
+        "random": {},
+        "tiles": [{"show_id": "s1", "path": "p1"}],
+        "history": {"max": 50},
+    }
+
+    inputs = iter([
+        "y",  # manage tiles
+        "add",
+        "s2",
+        "p2",
+        "",  # default weight
+        "remove",
+        "s1",
+        "done",
+        "",  # mode unchanged
+        "75",  # history limit
+    ])
+
+    def fake_input(_prompt: str) -> str:
+        return next(inputs)
+
+    saved: dict = {}
+
+    monkeypatch.setattr(caregiver.config, "load_config", lambda: cfg)
+
+    def fake_save(updated: dict) -> None:
+        saved.update(updated)
+
+    monkeypatch.setattr(caregiver.config, "save_config", fake_save)
+
+    caregiver.configure(fake_input)
+
+    assert [t["show_id"] for t in saved["tiles"]] == ["s2"]
+    assert saved["tiles"][0]["path"] == "p2"
+    assert saved["history"]["max"] == 75

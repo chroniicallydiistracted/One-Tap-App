@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import random
-
 import urllib.parse
 
 from one_tap import config, db
