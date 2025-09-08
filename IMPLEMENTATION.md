@@ -19,6 +19,11 @@ MVP as described in the repository `README`.
   updates until playback succeeds, enabling error skips.
 - Playback controller now retries up to three episodes before giving up,
   avoiding getting stuck on corrupt files.
+- Introduced auto-advance via a custom ``xbmc.Player`` subclass which moves to
+  the next candidate episode after playback ends and returns to the home screen
+  after three consecutive failures.
+ - Playback history is recorded only after Kodi confirms playback has started,
+   ensuring failed episodes do not pollute history.
 
 ## Design Choices
 
@@ -41,3 +46,4 @@ MVP as described in the repository `README`.
   on the built-in default.
 - Harden the SQLite layer with basic error handling and provide maintenance
   tooling such as a history purge command.
+

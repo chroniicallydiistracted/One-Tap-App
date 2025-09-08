@@ -1,0 +1,97 @@
+<window>
+    <defaultcontrol always="true">2001</defaultcontrol>
+    <controls>
+        <grouplist id="9000">
+            <left>360</left>
+            <top>180</top>
+            <width>1200</width>
+            <height>720</height>
+            <itemgap>20</itemgap>
+            <orientation>vertical</orientation>
+            <control type="button" id="2001">
+                <width>1200</width>
+                <height>120</height>
+                <label>$INFO[Window(Home).Property(tile.1.label)]</label>
+                <visible>!String.IsEmpty(Window(Home).Property(tile.1.label))</visible>
+                <onclick>RunScript(plugin.one_tap.play,show_id=$INFO[Window(Home).Property(tile.1.show_id)])</onclick>
+            </control>
+            <control type="button" id="2002">
+                <width>1200</width>
+                <height>120</height>
+                <label>$INFO[Window(Home).Property(tile.2.label)]</label>
+                <visible>!String.IsEmpty(Window(Home).Property(tile.2.label))</visible>
+                <onclick>RunScript(plugin.one_tap.play,show_id=$INFO[Window(Home).Property(tile.2.show_id)])</onclick>
+            </control>
+            <control type="button" id="2003">
+                <width>1200</width>
+                <height>120</height>
+                <label>$INFO[Window(Home).Property(tile.3.label)]</label>
+                <visible>!String.IsEmpty(Window(Home).Property(tile.3.label))</visible>
+                <onclick>RunScript(plugin.one_tap.play,show_id=$INFO[Window(Home).Property(tile.3.show_id)])</onclick>
+            </control>
+            <control type="button" id="2004">
+                <width>1200</width>
+                <height>120</height>
+                <label>$INFO[Window(Home).Property(tile.4.label)]</label>
+                <visible>!String.IsEmpty(Window(Home).Property(tile.4.label))</visible>
+                <onclick>RunScript(plugin.one_tap.play,show_id=$INFO[Window(Home).Property(tile.4.show_id)])</onclick>
+            </control>
+            <control type="button" id="2005">
+                <width>1200</width>
+                <height>120</height>
+                <label>$INFO[Window(Home).Property(tile.5.label)]</label>
+                <visible>!String.IsEmpty(Window(Home).Property(tile.5.label))</visible>
+                <onclick>RunScript(plugin.one_tap.play,show_id=$INFO[Window(Home).Property(tile.5.show_id)])</onclick>
+            </control>
+            <control type="button" id="2006">
+                <width>1200</width>
+                <height>120</height>
+                <label>$INFO[Window(Home).Property(tile.6.label)]</label>
+                <visible>!String.IsEmpty(Window(Home).Property(tile.6.label))</visible>
+                <onclick>RunScript(plugin.one_tap.play,show_id=$INFO[Window(Home).Property(tile.6.show_id)])</onclick>
+            </control>
+            <control type="button" id="2007">
+                <width>1200</width>
+                <height>120</height>
+                <label>$INFO[Window(Home).Property(tile.7.label)]</label>
+                <visible>!String.IsEmpty(Window(Home).Property(tile.7.label))</visible>
+                <onclick>RunScript(plugin.one_tap.play,show_id=$INFO[Window(Home).Property(tile.7.show_id)])</onclick>
+            </control>
+            <control type="button" id="2008">
+                <width>1200</width>
+                <height>120</height>
+                <label>$INFO[Window(Home).Property(tile.8.label)]</label>
+                <visible>!String.IsEmpty(Window(Home).Property(tile.8.label))</visible>
+                <onclick>RunScript(plugin.one_tap.play,show_id=$INFO[Window(Home).Property(tile.8.show_id)])</onclick>
+            </control>
+            <control type="button" id="2009">
+                <width>1200</width>
+                <height>120</height>
+                <label>$INFO[Window(Home).Property(tile.9.label)]</label>
+                <visible>!String.IsEmpty(Window(Home).Property(tile.9.label))</visible>
+                <onclick>RunScript(plugin.one_tap.play,show_id=$INFO[Window(Home).Property(tile.9.show_id)])</onclick>
+            </control>
+            <control type="button" id="2010">
+                <width>1200</width>
+                <height>120</height>
+                <label>$INFO[Window(Home).Property(tile.10.label)]</label>
+                <visible>!String.IsEmpty(Window(Home).Property(tile.10.label))</visible>
+                <onclick>RunScript(plugin.one_tap.play,show_id=$INFO[Window(Home).Property(tile.10.show_id)])</onclick>
+            </control>
+            <control type="button" id="2011">
+                <width>1200</width>
+                <height>120</height>
+                <label>$INFO[Window(Home).Property(tile.11.label)]</label>
+                <visible>!String.IsEmpty(Window(Home).Property(tile.11.label))</visible>
+                <onclick>RunScript(plugin.one_tap.play,show_id=$INFO[Window(Home).Property(tile.11.show_id)])</onclick>
+            </control>
+            <control type="button" id="2012">
+                <width>1200</width>
+                <height>120</height>
+                <label>$INFO[Window(Home).Property(tile.12.label)]</label>
+                <visible>!String.IsEmpty(Window(Home).Property(tile.12.label))</visible>
+                <onclick>RunScript(plugin.one_tap.play,show_id=$INFO[Window(Home).Property(tile.12.show_id)])</onclick>
+            </control>
+        </grouplist>
+    </controls>
+</window>
