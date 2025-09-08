@@ -167,10 +167,14 @@ def test_menu_runs_selected_actions(monkeypatch):
         caregiver.db, "purge_history", lambda _show=None: called.append("purge")
     )
     monkeypatch.setattr(
-        caregiver, "export_config", lambda path: called.append(f"export:{path}")
+        caregiver,
+        "export_config",
+        lambda path: called.append(f"export:{path}") or True,
     )
     monkeypatch.setattr(
-        caregiver, "import_config", lambda path: called.append(f"import:{path}")
+        caregiver,
+        "import_config",
+        lambda path: called.append(f"import:{path}") or True,
     )
 
     inputs = iter([
@@ -199,8 +203,7 @@ def test_export_config_writes_file(tmp_path, monkeypatch):
     monkeypatch.setattr(caregiver.config, "load_config", lambda: cfg)
 
     dest = tmp_path / "cfg.json"
-    caregiver.export_config(str(dest))
-
+    assert caregiver.export_config(str(dest)) is True
     assert json.loads(dest.read_text()) == cfg
 
 

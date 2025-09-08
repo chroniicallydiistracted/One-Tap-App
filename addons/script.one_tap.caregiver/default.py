@@ -205,7 +205,7 @@ def configure(get_input: Callable[[str], str] = _prompt) -> None:
     logger.info("Configuration updated")
 
 
-def export_config(path: str) -> None:
+def export_config(path: str) -> bool:
     """Export current configuration to ``path``."""
 
     dest = Path(path).expanduser()
@@ -215,8 +215,9 @@ def export_config(path: str) -> None:
             json.dump(cfg, f, indent=2, sort_keys=True)
     except OSError as exc:  # pragma: no cover - depends on fs
         logger.error(f"Failed to export configuration to {dest}: {exc}")
-    else:
-        logger.info(f"Configuration exported to {dest}")
+        return False
+    logger.info(f"Configuration exported to {dest}")
+    return True
 
 
 def import_config(path: str) -> bool:
