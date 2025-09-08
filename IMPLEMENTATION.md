@@ -22,8 +22,8 @@ MVP as described in the repository `README`.
 
 ## Design Choices
 
-- **File based storage:** Playback history uses a small JSON file instead of a
-  database for simplicity during early development.
+- **SQLite storage:** Playback history uses a lightweight SQLite database for
+  durability while remaining simple to manage.
 - **Kodi fallbacks:** Modules gracefully degrade when run outside Kodi by
   avoiding hard dependencies on `xbmc`/`xbmcvfs` modules, easing desktop testing.
 - **Explicit logging:** A tiny wrapper normalises logging both inside Kodi and
@@ -35,4 +35,9 @@ MVP as described in the repository `README`.
 - Extend randomiser service to support comfort weighting and exclude‑last logic
   without relying solely on the playback controller.
 - Implement auto-advance and smarter error handling based on player events.
-- Replace JSON file storage with a more robust database if needed.
+- Remove legacy JSON progress files once migration to SQLite completes to avoid
+  stale data lingering alongside the new database.
+- Allow caregivers to configure the maximum retained history instead of relying
+  on the built-in default.
+- Harden the SQLite layer with basic error handling and provide maintenance
+  tooling such as a history purge command.
