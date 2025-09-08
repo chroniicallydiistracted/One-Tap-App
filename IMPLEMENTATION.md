@@ -40,3 +40,10 @@ MVP as described in the repository `README`.
 - Extend randomiser service to support comfort weighting and exclude‑last logic
   without relying solely on the playback controller.
 - Implement auto-advance and smarter error handling based on player events.
+- Remove legacy JSON progress files once migration to SQLite completes to avoid
+  stale data lingering alongside the new database.
+- Allow caregivers to configure the maximum retained history instead of relying
+  on the built-in default.
+- Harden the SQLite layer with basic error handling and provide maintenance
+  tooling such as a history purge command.
+
