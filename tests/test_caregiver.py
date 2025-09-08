@@ -152,3 +152,25 @@ def test_manage_tiles_edit_and_reorder(monkeypatch):
     s1 = next(t for t in saved["tiles"] if t["show_id"] == "s1")
     assert s1["path"] == "p1n"
     assert s1["label"] == "NL1"
+
+
+def test_menu_runs_selected_actions(monkeypatch):
+    import default as caregiver
+
+    called: list[str] = []
+
+    monkeypatch.setattr(
+        caregiver, "configure", lambda _inp=None: called.append("config")
+    )
+    monkeypatch.setattr(
+        caregiver.db, "purge_history", lambda _show=None: called.append("purge")
+    )
+
+    inputs = iter(["1", "2", "", "3"])
+
+    def fake_input(_prompt: str) -> str:
+        return next(inputs)
+
+    caregiver.menu(fake_input)
+
+    assert called == ["config", "purge"]
