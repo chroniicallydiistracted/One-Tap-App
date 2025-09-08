@@ -1,46 +1,67 @@
-"""Simple JSON based progress database for One-Tap TV Launcher."""
+"""Playback history storage using SQLite for One-Tap TV Launcher."""
 from __future__ import annotations
 
-import json
+import sqlite3
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
 from . import config
 
 # Path inside the add-on's profile directory where playback history is stored
-PROGRESS_PATH = "special://profile/addon_data/plugin.one_tap.play/progress.json"
+DB_PATH = "special://profile/addon_data/plugin.one_tap.play/one_tap.db"
+DEFAULT_MAX_HISTORY = 50
 
 
 def _path() -> Path:
-    return config._resolve(PROGRESS_PATH)
+    return config._resolve(DB_PATH)
 
 
-def _load() -> Dict[str, List[str]]:
-    path = _path()
-    if path.exists():
-        with path.open("r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
-
-
-def _save(data: Dict[str, List[str]]) -> None:
+def _connect() -> sqlite3.Connection:
     path = _path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
+    conn = sqlite3.connect(str(path))
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS history (
+            show_id TEXT NOT NULL,
+            episode TEXT NOT NULL,
+            played_at REAL DEFAULT (strftime('%s','now'))
+        )
+        """
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_history_show ON history(show_id)")
+    return conn
 
 
 def get_history(show_id: str) -> List[str]:
     """Return playback history list for ``show_id``."""
 
-    return _load().get(show_id, [])
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT episode FROM history WHERE show_id=? ORDER BY rowid",
+            (show_id,),
+        ).fetchall()
+    return [r[0] for r in rows]
 
 
-def update_history(show_id: str, episode: str, max_history: int = 50) -> None:
+def update_history(
+    show_id: str, episode: str, max_history: int = DEFAULT_MAX_HISTORY
+) -> None:
     """Append ``episode`` to the history for ``show_id`` keeping ``max_history`` entries."""
-    data = _load()
-    history = data.get(show_id, [])
-    history.append(episode)
-    history = history[-max_history:]
-    data[show_id] = history
-    _save(data)
+
+    with _connect() as conn:
+        conn.execute(
+            "INSERT INTO history(show_id, episode) VALUES (?, ?)",
+            (show_id, episode),
+        )
+        conn.execute(
+            """
+            DELETE FROM history
+            WHERE show_id=?
+              AND rowid NOT IN (
+                SELECT rowid FROM history WHERE show_id=? ORDER BY rowid DESC LIMIT ?
+              )
+            """,
+            (show_id, show_id, max_history),
+        )
+

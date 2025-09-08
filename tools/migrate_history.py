@@ -23,9 +23,22 @@ def main() -> None:
     with src.open("r", encoding="utf-8") as f:
         data = json.load(f)
 
-    for show_id, episodes in data.items():
-        for ep in episodes:
-            db.update_history(show_id, ep, max_history=len(episodes))
+    with db._connect() as conn:
+        for show_id, episodes in data.items():
+            conn.executemany(
+                "INSERT INTO history(show_id, episode) VALUES (?, ?)",
+                ((show_id, ep) for ep in episodes),
+            )
+            conn.execute(
+                """
+                DELETE FROM history
+                WHERE show_id=?
+                  AND rowid NOT IN (
+                    SELECT rowid FROM history WHERE show_id=? ORDER BY rowid DESC LIMIT ?
+                  )
+                """,
+                (show_id, show_id, len(episodes)),
+            )
 
     dest = config._resolve(db.DB_PATH)
     print(f"Migrated history from {src} to {dest}")
