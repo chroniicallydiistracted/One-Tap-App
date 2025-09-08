@@ -26,8 +26,7 @@ MVP as described in the repository `README`.
 - Caregiver script verifies PINs before launching the menu.
 - Randomizer service chooses the next show using comfort weights and avoids
   repeating the same show consecutively.
-- Caregiver menu can manage tiles and adjust history retention limits.
-
+  
 ## Design Choices
 
 - **SQLite storage:** Playback history uses a lightweight SQLite database for
@@ -41,3 +40,4 @@ MVP as described in the repository `README`.
 
 - Allow caregivers to reorder tiles and edit metadata.
 - Expose further playback settings through the caregiver UI.
+

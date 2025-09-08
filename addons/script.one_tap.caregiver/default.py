@@ -137,6 +137,13 @@ def main() -> None:
         return
     configure()
 
+    if not verify_pin():
+        return
+    configure()
+
+    if not verify_pin():
+        return
+    logger.info("Caregiver menu not yet implemented")
 
 if __name__ == "__main__":
     main()
