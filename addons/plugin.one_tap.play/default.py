@@ -127,14 +127,29 @@ def main() -> None:
         logger.error("No episodes found for %s", tile["path"])
         return
 
-    player = AutoAdvancePlayer(show_id, episodes, cfg)
-    if xbmc:
-        monitor = xbmc.Monitor()
-        while player.active and not monitor.abortRequested():
-            if monitor.waitForAbort(1):
-                break
-    else:
-        logger.info("Auto-advance requires Kodi; exiting")
+    candidates = selection.episode_candidates(
+        show_id, episodes, cfg.get("mode", "order"), cfg.get("random", {})
+    )
+    history_limit = cfg.get("history", {}).get("max", db.DEFAULT_MAX_HISTORY)
+    attempts = 0
+    for episode in candidates:
+        if attempts >= 3:
+            break
+        attempts += 1
+        logger.info("Attempting to play %s", episode)
+        try:
+            result = jsonrpc.play_file(episode)
+        except Exception as exc:  # pragma: no cover - runtime
+            logger.error("JSON-RPC failed for %s: %s", episode, exc)
+            continue
+        if result.get("error"):
+            logger.error("Kodi reported error for %s: %s", episode, result["error"])
+            continue
+        db.update_history(show_id, episode, max_history=history_limit)
+        logger.info("Playing %s", episode)
+        return
+
+    logger.error("Failed to start playback after %d attempts", attempts)
 
 if __name__ == "__main__":
     main()

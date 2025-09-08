@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
-from typing import List
+from typing import List, Optional
+
+import logging
 
 from . import config
 
@@ -11,10 +13,11 @@ from . import config
 DB_PATH = "special://profile/addon_data/plugin.one_tap.play/one_tap.db"
 DEFAULT_MAX_HISTORY = 50
 
+logger = logging.getLogger(__name__)
+
 
 def _path() -> Path:
     return config._resolve(DB_PATH)
-
 
 def _connect() -> sqlite3.Connection:
     path = _path()
@@ -36,11 +39,15 @@ def _connect() -> sqlite3.Connection:
 def get_history(show_id: str) -> List[str]:
     """Return playback history list for ``show_id``."""
 
-    with _connect() as conn:
-        rows = conn.execute(
-            "SELECT episode FROM history WHERE show_id=? ORDER BY rowid",
-            (show_id,),
-        ).fetchall()
+    try:
+        with _connect() as conn:
+            rows = conn.execute(
+                "SELECT episode FROM history WHERE show_id=? ORDER BY rowid",
+                (show_id,),
+            ).fetchall()
+    except sqlite3.DatabaseError as exc:  # pragma: no cover - defensive
+        logger.error("Failed to read history for %s: %s", show_id, exc)
+        return []
     return [r[0] for r in rows]
 
 
@@ -48,20 +55,35 @@ def update_history(
     show_id: str, episode: str, max_history: int = DEFAULT_MAX_HISTORY
 ) -> None:
     """Append ``episode`` to the history for ``show_id`` keeping ``max_history`` entries."""
+    try:
+        with _connect() as conn:
+            conn.execute(
+                "INSERT INTO history(show_id, episode) VALUES (?, ?)",
+                (show_id, episode),
+            )
+            conn.execute(
+                """
+                DELETE FROM history
+                WHERE show_id=?
+                  AND rowid NOT IN (
+                    SELECT rowid FROM history WHERE show_id=? ORDER BY rowid DESC LIMIT ?
+                  )
+                """,
+                (show_id, show_id, max_history),
+            )
+    except sqlite3.DatabaseError as exc:  # pragma: no cover - defensive
+        logger.error("Failed to update history for %s: %s", show_id, exc)
 
-    with _connect() as conn:
-        conn.execute(
-            "INSERT INTO history(show_id, episode) VALUES (?, ?)",
-            (show_id, episode),
-        )
-        conn.execute(
-            """
-            DELETE FROM history
-            WHERE show_id=?
-              AND rowid NOT IN (
-                SELECT rowid FROM history WHERE show_id=? ORDER BY rowid DESC LIMIT ?
-              )
-            """,
-            (show_id, show_id, max_history),
-        )
+
+def purge_history(show_id: Optional[str] = None) -> None:
+    """Remove history for ``show_id`` or all shows when ``show_id`` is ``None``."""
+
+    try:
+        with _connect() as conn:
+            if show_id is None:
+                conn.execute("DELETE FROM history")
+            else:
+                conn.execute("DELETE FROM history WHERE show_id=?", (show_id,))
+    except sqlite3.DatabaseError as exc:  # pragma: no cover - defensive
+        logger.error("Failed to purge history: %s", exc)
 

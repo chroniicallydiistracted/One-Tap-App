@@ -42,6 +42,12 @@ def main() -> None:
 
     dest = config._resolve(db.DB_PATH)
     print(f"Migrated history from {src} to {dest}")
+    
+    try:
+        src.unlink()
+        print(f"Removed legacy history file {src}")
+    except OSError as exc:  # pragma: no cover - defensive
+        print(f"Failed to remove legacy history file {src}: {exc}")
 
 
 if __name__ == "__main__":

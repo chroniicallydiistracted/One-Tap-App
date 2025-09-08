@@ -42,3 +42,38 @@ def test_migrate_history(tmp_path, monkeypatch):
     migrate_history.main()
     assert db.get_history("show") == ["a", "b", "c"]
 
+def test_migrate_removes_legacy_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "_resolve", lambda p: _fake_resolve(tmp_path, p))
+    monkeypatch.setattr(db, "DB_PATH", "history.db")
+
+    legacy = {"show": ["a"]}
+    progress = tmp_path / "progress.json"
+    progress.write_text(json.dumps(legacy))
+
+    sys.path.append(str(repo_root))
+    from tools import migrate_history
+
+    monkeypatch.setattr(migrate_history, "OLD_JSON_PATH", "progress.json")
+
+    migrate_history.main()
+    assert not progress.exists()
+
+
+def test_purge_history(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "_resolve", lambda p: _fake_resolve(tmp_path, p))
+    monkeypatch.setattr(db, "DB_PATH", "history.db")
+
+    for ep in ["a", "b"]:
+        db.update_history("show", ep, max_history=10)
+    assert db.get_history("show") == ["a", "b"]
+
+    db.purge_history("show")
+    assert db.get_history("show") == []
+
+    # Repopulate and purge all
+    for ep in ["c", "d"]:
+        db.update_history("show", ep, max_history=10)
+    db.update_history("other", "e", max_history=10)
+    db.purge_history()
+    assert db.get_history("show") == []
+    assert db.get_history("other") == []
