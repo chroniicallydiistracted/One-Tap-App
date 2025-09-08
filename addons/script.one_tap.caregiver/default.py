@@ -31,7 +31,6 @@ def _prompt(message: str) -> str:
         return dialog.input(message) or ""
     return input(f"{message}: ")
 
-
 def verify_pin(get_pin: Callable[[str], str] = _prompt_pin) -> bool:
     """Return ``True`` if the caregiver PIN is valid or not set."""
 
@@ -44,7 +43,6 @@ def verify_pin(get_pin: Callable[[str], str] = _prompt_pin) -> bool:
         logger.error("Incorrect PIN entered")
         return False
     return True
-
 
 def configure(get_input: Callable[[str], str] = _prompt) -> None:
     """Interactively update caregiver configuration settings."""
@@ -95,6 +93,9 @@ def main() -> None:
         return
     configure()
 
+    if not verify_pin():
+        return
+    logger.info("Caregiver menu not yet implemented")
 
 if __name__ == "__main__":
     main()
