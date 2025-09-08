@@ -75,6 +75,18 @@ def update_history(
         logger.error("Failed to update history for %s: %s", show_id, exc)
 
 
+def remove_last_history(show_id: str) -> None:
+    """Remove the most recent history entry for ``show_id``."""
+
+    try:
+        with _connect() as conn:
+            conn.execute(
+                "DELETE FROM history WHERE rowid = (SELECT MAX(rowid) FROM history WHERE show_id=?)",
+                (show_id,),
+            )
+    except sqlite3.DatabaseError as exc:  # pragma: no cover - defensive
+        logger.error("Failed to remove last history for %s: %s", show_id, exc)
+        
 def purge_history(show_id: Optional[str] = None) -> None:
     """Remove history for ``show_id`` or all shows when ``show_id`` is ``None``."""
 

@@ -77,3 +77,15 @@ def test_purge_history(tmp_path, monkeypatch):
     db.purge_history()
     assert db.get_history("show") == []
     assert db.get_history("other") == []
+
+
+def test_remove_last_history(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "_resolve", lambda p: _fake_resolve(tmp_path, p))
+    monkeypatch.setattr(db, "DB_PATH", "history.db")
+
+    for ep in ["a", "b"]:
+        db.update_history("show", ep, max_history=10)
+    assert db.get_history("show") == ["a", "b"]
+
+    db.remove_last_history("show")
+    assert db.get_history("show") == ["a"]
