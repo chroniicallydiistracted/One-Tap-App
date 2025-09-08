@@ -38,7 +38,6 @@ def get_history(show_id: str) -> List[str]:
 
 def update_history(show_id: str, episode: str, max_history: int = 50) -> None:
     """Append ``episode`` to the history for ``show_id`` keeping ``max_history`` entries."""
-
     data = _load()
     history = data.get(show_id, [])
     history.append(episode)
